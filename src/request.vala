@@ -23,6 +23,8 @@ namespace Valatra {
     
     public HashMap<string, string> params;
     public HashMap<string, string> headers;
+    public HashMap<string, string> session;
+    
     public string method {
       get { return method_; }
     }
@@ -42,6 +44,7 @@ namespace Valatra {
     public HTTPRequest(string str, SocketConnection c) {
       headers = new HashMap<string, string>();
       params  = new HashMap<string, string>();
+      session = new HashMap<string, string>();
       
       method_      = null;
       request_uri_ = null;
@@ -121,6 +124,15 @@ namespace Valatra {
         string val   = split[1].strip();
         
         this.headers[field] = val.strip();
+        
+        if(field == "Cookie") {
+          string[] cookies = val.split(";");
+          foreach(string cookie in cookies) {
+            string[] tmp = cookie.split("=");
+            session[tmp[0]] = tmp[1];
+          }
+        }
+        
       }      
     }  
   }  

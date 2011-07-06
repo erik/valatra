@@ -7,6 +7,7 @@ namespace Valatra {
     private string body_;
     
     public HashMap<string, string> headers;
+    public HashMap<string, Cookie> session;
     
     public int status {
       get { return status_; }
@@ -29,6 +30,7 @@ namespace Valatra {
       body_ = "";
       
       headers = new HashMap<string, string>();      
+      session = new HashMap<string, Cookie>();
       
       default_headers();
     }
@@ -38,6 +40,7 @@ namespace Valatra {
       status_msg_ = msg;
       body_ = "";
       headers = new HashMap<string, string>();
+      session = new HashMap<string, Cookie>();      
       
       default_headers();
     }
@@ -72,6 +75,12 @@ namespace Valatra {
         stdout.printf(@"$key => $val\n");
         
         build.append(@"$key: $val\r\n");
+      }
+      
+      foreach(var cookie in session.entries) {
+        var val = cookie.value.create();
+        
+        build.append(@"Set-cookie: $val\r\n");
       }
             
       build.append(@"\r\n$body_");
