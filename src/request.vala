@@ -71,7 +71,7 @@ namespace Valatra {
         return;
       } else {
         var method = pieces[0];
-        var uri    = pieces[1];
+        var uri    = Uri.unescape_string(pieces[1]);
         var proto  = pieces[2];
         
         var validMethod = false;
@@ -96,7 +96,6 @@ namespace Valatra {
           request_query_ = null;
         } else {
           request_path_  = uri[0:ind];
-          // TODO: URL encode/decode
           request_query_ = uri[ind + 1 : uri.length];
           
           string[] qparams = request_query_.split("&");

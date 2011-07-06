@@ -19,16 +19,17 @@ app.get('/', (req, res) => {
 
 });
 
-// Not implemented yet
-app.post('/submit', (req, res) => {
-  // if a POST was made to '/submit?title=My Awesome Title', req.params['title']
-  // would return that
-  req.params["title"];
-});
-
-app.get('/user/:id', (req, res) => {
+// this would be called for a request to '/user/john', or '/user/123', etc
+app.get("/user/:id", (req, res) => {
   var id = req.params["id"];
   // do something with id...
+});
+
+// Not implemented yet
+app.post("/submit", (req, res) => {
+  // if a POST was made to "/submit?title=My Awesome Title", req.params["title"]
+  // would return that
+  req.params["title"];
 });
 
 app.start();

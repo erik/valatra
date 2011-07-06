@@ -3,16 +3,23 @@ using Gee;
 namespace Valatra {
   public delegate void RouteFunc(HTTPRequest req, HTTPResponse res);
   
-  private class RouteFuncContainer : GLib.Object {
-    unowned RouteFunc func_;
+  private class RouteWrapper : GLib.Object {
+    private unowned RouteFunc func_;
+    private Route route_;
     
     public RouteFunc func {
       get { return func_; }
       set { func_ = value;}
     }
     
-    public RouteFuncContainer(RouteFunc f) {
-      func = f;
+    public Route route {
+      get { return route_; }
+      set { route_ = value; }
+    }
+    
+    public RouteWrapper(Route r, RouteFunc f) {
+      func_ = f;
+      route_ = r;
     }
     
   }
@@ -23,8 +30,9 @@ namespace Valatra {
     private SocketService server;
         
     /* since delegates can't be stored directly, this needs to be done */
-    /* HTTP method => { path -> func* }*/
-    private HashMap<string, HashMap<string, RouteFuncContainer>> routes;
+    /* HTTP method => [{ path, func }]*/
+    // TODO: using a HashMap here is not needed
+    private HashMap<string, ArrayList<RouteWrapper>> routes;
 
     public uint16 port {
       get { return port_; }
@@ -40,7 +48,7 @@ namespace Valatra {
   
     public App() {
       server = new SocketService();
-      routes = new HashMap<string, HashMap<string, RouteFuncContainer>>();
+      routes = new HashMap<string, ArrayList<RouteWrapper>>();
     }
     
     /* probably not a good idea to override get... */
@@ -48,13 +56,14 @@ namespace Valatra {
       this.route("GET", route, func);
     }
     
-    public void route(string meth, string route, RouteFunc func) {
+    public void route(string meth, string path, RouteFunc func) {
+      var route = new Route(path);
       if(routes[meth] == null) {
         stdout.printf("Creating %s\n", meth);
-        routes[meth] = new HashMap<string, RouteFuncContainer>();
+        routes[meth] = new ArrayList<RouteWrapper>();
       }
-      stdout.printf("Creating %s/%s\n", meth, route);
-      routes[meth][route] = new RouteFuncContainer(func);
+      stdout.printf("Creating %s \"%s\"\n", meth, route.route);
+      routes[meth].add(new RouteWrapper(route, func));
     }
 
     public async bool start() {
@@ -107,13 +116,21 @@ namespace Valatra {
         
         stdout.printf("%s, %s\n", request.method, request.path);
         
-        RouteFuncContainer fc = routes[request.method][request.path];
+        ArrayList<RouteWrapper> array = routes[request.method];
+        RouteWrapper wrap = null;
+        
+        foreach(var elem in array) {
+          if(elem.route.matches(request)) {
+            wrap = elem;
+            break;
+          }
+        }        
         
         HTTPResponse res = null;       
         
-        if(fc != null) {
+        if(wrap != null) {
           res = new HTTPResponse();
-          fc.func(request, res);
+          wrap.func(request, res);
         } else {
           res = new HTTPResponse.with_status(404, "Not found");
         }
