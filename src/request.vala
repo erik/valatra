@@ -24,7 +24,6 @@ namespace Valatra {
 
     public bool accept_body;
 
-
     public HashMap<string, string> params;
     public HashMap<string, string> headers;
     public HashMap<string, string> session;

@@ -29,10 +29,8 @@ namespace Valatra {
     private uint16 port_ = 3000;
     private SocketService server;
 
-    /* since delegates can't be stored directly, this needs to be done */
-    /* HTTP method => [{ path, func }]*/
-    // TODO: using a HashMap here is not needed
-    private HashMap<string, ArrayList<RouteWrapper>> routes;
+    /* hacky: 7 is the size of HTTP_METHODS */
+    private ArrayList<RouteWrapper> routes[7];
 
     public uint16 port {
       get { return port_; }
@@ -48,7 +46,11 @@ namespace Valatra {
 
     public App() {
       server = new SocketService();
-      routes = new HashMap<string, ArrayList<RouteWrapper>>();
+
+      for(int i = 0; i < HTTP_METHODS.length; ++i) {
+        routes[i] = new ArrayList<RouteWrapper>();
+      }
+
     }
 
     /* probably not a good idea to override get... */
@@ -61,13 +63,21 @@ namespace Valatra {
     }
 
     public void route(string meth, string path, RouteFunc func) {
-      var route = new Route(path);
-      if(routes[meth] == null) {
-        stdout.printf("Creating %s\n", meth);
-        routes[meth] = new ArrayList<RouteWrapper>();
+      int index = -1;
+      for(int i = 0; i < HTTP_METHODS.length; ++i) {
+        if(meth == HTTP_METHODS[i]) {
+          index = i;
+        }
       }
+
+      if(index == -1) {
+        stderr.printf("App.route(): Bad method: %s\n", meth);
+        return;
+      }
+
+      var route = new Route(path);
       stdout.printf("Creating %s \"%s\"\n", meth, route.route);
-      routes[meth].add(new RouteWrapper(route, func));
+      routes[index].add(new RouteWrapper(route, func));
     }
 
     public async bool start() {
@@ -142,7 +152,19 @@ namespace Valatra {
 
         stdout.printf("%s, %s\n", request.method, request.path);
 
-        ArrayList<RouteWrapper> array = routes[request.method];
+        int index = -1;
+        for(int i = 0; i < HTTP_METHODS.length; ++i) {
+          if(request.method == HTTP_METHODS[i]) {
+            index = i;
+          }
+        }
+
+        if(index == -1) {
+          stderr.printf("App.route(): Bad method: %s\n", request.method);
+          return;
+        }
+
+        ArrayList<RouteWrapper> array = routes[index];
         RouteWrapper wrap = null;
 
         foreach(var elem in array) {
@@ -159,6 +181,8 @@ namespace Valatra {
           wrap.func(request, res);
         } else {
           res = new HTTPResponse.with_status(404, "Not found");
+          res.type("html");
+          res.body = "<!doctype html><html><head><title>404</title></head><body><h1>404 Not found.</h1></body></html>";
         }
 
         res.create(dos);
