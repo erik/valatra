@@ -39,9 +39,13 @@ public static int main (string[] args) {
 
   });
 
+  // expects POST /post with body name=Some+Name&age=Some+age
   app.post("/post", (req, res) => {
     var body = req.body;
-    res.body = @"You sent me $body";
+    var name = req.params["name"];
+    var age  = req.params["age"];
+
+    res.body = @"Oh, now I get it, $name is $age years old. Full POST data =>$body";
   });
 
   app.start();

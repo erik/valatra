@@ -130,6 +130,16 @@ namespace Valatra {
 
         if(accept_body) {
           body_ = line;
+
+          var pieces = line.split("&");
+          foreach(var piece in pieces) {
+            piece   = piece.replace("+", " ");
+            var tmp = piece.split("=", 2);
+
+            params[Uri.unescape_string(tmp[0])] = Uri.unescape_string(tmp[1]);
+
+          }
+
         } else {
           string[] split = line.split(":", 2);
           string field = split[0];

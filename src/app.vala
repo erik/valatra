@@ -62,6 +62,10 @@ namespace Valatra {
       this.route("POST", route, func);
     }
 
+    public void put(string route, RouteFunc func) {
+      this.route("PUT", route, func);
+    }
+
     public void route(string meth, string path, RouteFunc func) {
       int index = -1;
       for(int i = 0; i < HTTP_METHODS.length; ++i) {
