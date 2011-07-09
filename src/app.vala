@@ -28,6 +28,7 @@ namespace Valatra {
 
     private uint16 port_ = 3000;
     private SocketService server;
+    public Cache cache;
 
     /* hacky: 7 is the size of HTTP_METHODS */
     private ArrayList<RouteWrapper> routes[7];
@@ -46,6 +47,7 @@ namespace Valatra {
 
     public App() {
       server = new SocketService();
+      cache = new Cache();
 
       for(int i = 0; i < HTTP_METHODS.length; ++i) {
         routes[i] = new ArrayList<RouteWrapper>();
@@ -153,8 +155,22 @@ namespace Valatra {
           }
         }
 
+        request.app = this;
 
         stdout.printf("%s, %s\n", request.method, request.path);
+
+        // check cache first
+        var etag = request.headers["If-None-Match"];
+        if(etag != null) {
+          var ent = cache[request.path];
+          // cache hit
+          if(ent != null && ent.etag == etag) {
+            var rsp = new HTTPResponse.with_status(304, "Not modified");
+            rsp.headers["Etag"] = etag;
+            rsp.create(dos);
+            return;
+          }
+        }
 
         int index = -1;
         for(int i = 0; i < HTTP_METHODS.length; ++i) {

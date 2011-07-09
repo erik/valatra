@@ -23,6 +23,7 @@ namespace Valatra {
     private string body_;
 
     public bool accept_body;
+    public unowned App app;
 
     public HashMap<string, string> params;
     public HashMap<string, string> headers;

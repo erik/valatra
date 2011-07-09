@@ -13,7 +13,7 @@ public static int main (string[] args) {
     res.body = @"<h1>Hello from Vala!<br>Your IP is $ip</h1>";
   });
 
-  app.get("/:user/:post_id", (req, res) => {
+  app.get("/blog/:user/:post_id", (req, res) => {
     var user = req.params["user"];
     var post = req.params["post_id"];
 
@@ -37,6 +37,24 @@ public static int main (string[] args) {
       res.body = @"Cookie was not null, it was $cookie";
     }
 
+  });
+
+  app.get("/cache", (req, res) => {
+    var rnd = new Rand();
+    var n = rnd.next_int();
+    var body = @"This page will be cached. To prove it, here's a random number $n";
+
+    var ent = new CacheEntry(body);
+    req.app.cache.set("/cache", ent);
+
+    res.headers["Etag"] = ent.etag;
+    res.body = body;
+  });
+
+  app.get("/cache/clear", (req, res) => {
+    req.app.cache.invalidate("/cache");
+
+    res.body = "Cleared cache";
   });
 
   // expects POST /post with body name=Some+Name&age=Some+age

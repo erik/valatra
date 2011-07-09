@@ -66,7 +66,12 @@ namespace Valatra {
       try {
         dos.put_string(@"HTTP/1.1 $status_ $status_msg_\r\n");
 
-        headers["Content-length"] = body_.length.to_string();
+        if(body != null && body_.length != 0) {
+          headers["Content-length"] = body_.length.to_string();
+        } else {
+          headers.unset("Content-length");
+          headers.unset("Content-type");
+        }
 
         foreach(var ent in headers.entries) {
           string key = ent.key;
