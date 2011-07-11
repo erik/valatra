@@ -17,11 +17,30 @@ namespace Valatra {
       set { route_ = value; }
     }
 
-    public RouteWrapper(Route r, RouteFunc f) {
+    public RouteWrapper(Route? r, RouteFunc f) {
       func_ = f;
       route_ = r;
     }
+  }
 
+  public class StatusWrapper : GLib.Object {
+    private unowned RouteFunc func_;
+    private int status_;
+
+    public RouteFunc func {
+      get { return func_; }
+      set { func_ = value;}
+    }
+
+    public int status {
+      get { return status_; }
+      set { status_ = value; }
+    }
+
+    public StatusWrapper(int s, RouteFunc f) {
+      func_ = f;
+      status_ = s;
+    }
   }
 
   public class App : GLib.Object {
@@ -32,6 +51,8 @@ namespace Valatra {
 
     /* hacky: 7 is the size of HTTP_METHODS */
     private ArrayList<RouteWrapper> routes[7];
+
+    private ArrayList<StatusWrapper> status_handles;
 
     public uint16 port {
       get { return port_; }
@@ -49,10 +70,16 @@ namespace Valatra {
       server = new SocketService();
       cache = new Cache();
 
+      status_handles = new ArrayList<StatusWrapper>();
+
       for(int i = 0; i < HTTP_METHODS.length; ++i) {
         routes[i] = new ArrayList<RouteWrapper>();
       }
 
+    }
+
+    public void on(int stat, RouteFunc func) {
+      status_handles.add(new StatusWrapper(stat, func));
     }
 
     /* probably not a good idea to override get... */
@@ -69,6 +96,7 @@ namespace Valatra {
     }
 
     public void route(string meth, string path, RouteFunc func) {
+
       int index = -1;
       for(int i = 0; i < HTTP_METHODS.length; ++i) {
         if(meth == HTTP_METHODS[i]) {
@@ -111,6 +139,29 @@ namespace Valatra {
         new MainLoop().run();
 
         return true;
+    }
+
+    private HTTPResponse get_status_handle(int stat, HTTPRequest req) {
+      var res = new HTTPResponse.with_status(stat, stat.to_string());
+      int index = -1;
+
+      var size = status_handles.size;
+      for(var i = 0; i < size; ++i) {
+        var handle = status_handles[i];
+        if(handle.status == stat) {
+          index = i;
+          break;
+        }
+      }
+
+      if(index == -1) {
+        res.type("html");
+        res.body = @"<h1>$stat</h1>";
+      } else {
+        status_handles[index].func(req, res);
+      }
+
+      return res;
     }
 
     private async void process_request(SocketConnection conn) {
@@ -180,7 +231,11 @@ namespace Valatra {
         }
 
         if(index == -1) {
-          stderr.printf("App.route(): Bad method: %s\n", request.method);
+          stderr.printf("App.process_request(): Bad method: %s\n", request.method);
+
+          var r = get_status_handle(400, request);
+
+          r.create(dos);
           return;
         }
 
@@ -200,9 +255,7 @@ namespace Valatra {
           res = new HTTPResponse();
           wrap.func(request, res);
         } else {
-          res = new HTTPResponse.with_status(404, "Not found");
-          res.type("html");
-          res.body = "<!doctype html><html><head><title>404</title></head><body><h1>404 Not found.</h1></body></html>";
+          res = get_status_handle(404, request);
         }
 
         res.create(dos);

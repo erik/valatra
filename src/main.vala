@@ -6,6 +6,12 @@ public static int main (string[] args) {
   var app = new App();
   app.port = 3333;
 
+  app.on(404, (req, res) => {
+    res.type("text/html");
+    var page = req.path;
+    res.body = @"<h1>404 Not found.</h1><br><p>Requested page $page not found</p>";
+  });
+
   app.get("/", (req, res) => {
     res.type("html");
 
@@ -45,6 +51,7 @@ public static int main (string[] args) {
     var body = @"This page will be cached. To prove it, here's a random number $n";
 
     var ent = new CacheEntry(body);
+	// need to reference app indirectly for some reason...
     req.app.cache.set("/cache", ent);
 
     res.headers["Etag"] = ent.etag;
