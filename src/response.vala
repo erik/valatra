@@ -62,6 +62,10 @@ namespace Valatra {
       }
     }
 
+    public void halt(int stat) throws HTTPStatus {
+      throw new HTTPStatus.STATUS(stat.to_string());
+    }
+
     public void create(DataOutputStream dos) {
       try {
         dos.put_string(@"HTTP/1.1 $status_ $status_msg_\r\n");

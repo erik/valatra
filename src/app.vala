@@ -1,7 +1,7 @@
 using Gee;
 
 namespace Valatra {
-  public delegate void RouteFunc(HTTPRequest req, HTTPResponse res);
+  public delegate void RouteFunc(HTTPRequest req, HTTPResponse res) throws HTTPStatus;
 
   private class RouteWrapper : GLib.Object {
     private unowned RouteFunc func_;
@@ -21,6 +21,10 @@ namespace Valatra {
       func_ = f;
       route_ = r;
     }
+  }
+
+  public errordomain HTTPStatus {
+    STATUS
   }
 
   public class StatusWrapper : GLib.Object {
@@ -158,7 +162,11 @@ namespace Valatra {
         res.type("html");
         res.body = @"<h1>$stat</h1>";
       } else {
-        status_handles[index].func(req, res);
+        try {
+          status_handles[index].func(req, res);
+        } catch(HTTPStatus stat) {
+          res.body = "Sorry, something just exploded";
+        }
       }
 
       return res;
@@ -253,7 +261,11 @@ namespace Valatra {
 
         if(wrap != null) {
           res = new HTTPResponse();
-          wrap.func(request, res);
+          try {
+            wrap.func(request, res);
+          } catch(HTTPStatus stat) {
+            res = get_status_handle(int.parse(stat.message), request);
+          }
         } else {
           res = get_status_handle(404, request);
         }

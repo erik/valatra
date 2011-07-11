@@ -19,6 +19,10 @@ public static int main (string[] args) {
     res.body = @"<h1>Hello from Vala!<br>Your IP is $ip</h1>";
   });
 
+  app.get("/status/:status", (req, res) => {
+    res.halt(int.parse(req.params["status"]));
+  });
+
   app.get("/blog/:user/:post_id", (req, res) => {
     var user = req.params["user"];
     var post = req.params["post_id"];
@@ -51,7 +55,7 @@ public static int main (string[] args) {
     var body = @"This page will be cached. To prove it, here's a random number $n";
 
     var ent = new CacheEntry(body);
-	// need to reference app indirectly for some reason...
+    // need to reference app indirectly for some reason...
     req.app.cache.set("/cache", ent);
 
     res.headers["Etag"] = ent.etag;
