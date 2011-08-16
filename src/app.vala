@@ -129,9 +129,6 @@ namespace Valatra {
             return false;
           }
 
-          string str = addr.get_address().to_string();
-
-          stdout.printf("Got a connection from >%s<\n", str);
           process_request.begin (conn);
 
           return true;
@@ -215,8 +212,6 @@ namespace Valatra {
         }
 
         request.app = this;
-
-        stdout.printf("%s, %s\n", request.method, request.path);
 
         // check cache first
         var etag = request.headers["If-None-Match"];
