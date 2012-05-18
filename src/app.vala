@@ -178,12 +178,11 @@ namespace Valatra {
         StringBuilder sb = new StringBuilder();
 
         while(true) {
-          StringBuilder buf = new StringBuilder.sized(100);
-
-          ssize_t ret = conn.socket.receive(buf.str, 100);
+          uint8[] buf = new uint8[100];
+          ssize_t ret = conn.socket.receive(buf);
 
           if(ret > 0) {
-            sb.append(buf.str[0 : ret]);
+            sb.append((string)buf);
           }
 
           if(ret < 100) {
